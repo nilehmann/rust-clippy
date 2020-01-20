@@ -13,11 +13,24 @@ on:
     - '**.md'
 
 jobs:
+  toolchain_setup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: rust-toolchain
+        uses: actions-rs/toolchain@v1.0.3
+        with:
+          toolchain: nightly
+          target: x86_64-unknown-linux-gnu
+          profile: minimal
+      - name: Master Toolchain Setup
+        run: sh setup_toolchain.sh
+    
   build:
+    needs: toolchain_setup
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
     - name: Build
       run: cargo build --features integration
 
@@ -42,7 +55,7 @@ jobs:
         - 'rust-lang/log'
         - 'chronotope/chrono'
 
-    needs: build
+    needs: [toolchain_setup, build]
     runs-on: ubuntu-latest
 
     steps:
