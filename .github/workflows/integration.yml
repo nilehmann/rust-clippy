@@ -13,28 +13,27 @@ on:
     - '**.md'
 
 jobs:
-  toolchain_setup:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2.0.0
-      - name: rust-toolchain
-        uses: actions-rs/toolchain@v1.0.3
-        with:
-          toolchain: nightly
-          target: x86_64-unknown-linux-gnu
-          profile: minimal
-      - name: Master Toolchain Setup
-        run: bash setup-toolchain.sh
-
   build:
-    needs: toolchain_setup
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout
+      uses: actions/checkout@v2.0.0
+    - name: rust-toolchain
+      uses: actions-rs/toolchain@v1.0.3
+      with:
+        toolchain: nightly
+        target: x86_64-unknown-linux-gnu
+        profile: minimal
+    - name: Master Toolchain Setup
+      run: bash setup-toolchain.sh
     - name: Build
       run: cargo build --features integration
+    - name: Upload traget/
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: target
+        path: target
 
   test:
     strategy:
@@ -57,10 +56,16 @@ jobs:
         - 'rust-lang/log'
         - 'chronotope/chrono'
 
-    needs: [toolchain_setup, build]
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2.0.0
+      - name: Download target/
+        uses: actions/download-artifact@v1.0.0
+        with:
+          name: target
       - name: Test ${{ matrix.integration }}
         run: cargo test --test integration --features integration
         env:
