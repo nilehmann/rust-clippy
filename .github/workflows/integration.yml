@@ -45,18 +45,13 @@ jobs:
         toolchain: nightly
         target: x86_64-unknown-linux-gnu
         profile: minimal
+    - name: Cache cargo dir
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo
+        key: ${{ runner.os }}-cargo
     - name: Checkout
       uses: actions/checkout@v2.0.0
-    - name: Cache cargo registry
-      uses: actions/cache@v1
-      with:
-        path: ~/.cargo/registry
-        key: ${{ runner.os }}-cargo-registry
-    - name: Cache cargo index
-      uses: actions/cache@v1
-      with:
-        path: ~/.cargo/git
-        key: ${{ runner.os }}-cargo-index
     - name: Master Toolchain Setup
       run: bash setup-toolchain.sh
     - name: Build
@@ -65,3 +60,8 @@ jobs:
       run: cargo test --test integration --features integration
       env:
         INTEGRATION: ${{ matrix.integration }}
+    - name: Run cargo-cache --autoclean
+      run: |
+        cargo install cargo-cache --debug
+        find ~/.cargo/bin ! -type d -exec strip {} \;
+        cargo cache --autoclean
