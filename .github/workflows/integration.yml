@@ -1,0 +1,52 @@
+name: Integration
+
+on:
+  push:
+    branches:
+    - auto
+    - try
+    paths-ignore:
+    # Don't run integration test, when only textfiles are modified
+    - 'rust-toolchain'
+    - 'COPYRIGHT'
+    - 'LICENSE-*'
+    - '**.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build
+      run: cargo build --features integration
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        integration:
+        - 'rust-lang/rls'
+        - 'rust-lang/cargo'
+        - 'rust-lang/chalk'
+        - 'Geal/nom'
+        - 'rust-lang/rustfmt'
+        - 'hyperium/hyper'
+        - 'rust-itertools/itertools'
+        - 'serde-rs/serde'
+        - 'rust-lang/stdarch'
+        - 'rust-random/rand'
+        - 'rust-lang/futures-rs'
+        - 'Marwes/combine'
+        - 'rust-lang-nursery/failure'
+        - 'rust-lang/log'
+        - 'chronotope/chrono'
+
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test ${{ matrix.integration }}
+        run: cargo test --test integration --features integration
+        env:
+          INTEGRATION: ${{ matrix.integration }}
