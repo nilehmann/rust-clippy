@@ -12,30 +12,11 @@ on:
     - 'LICENSE-*'
     - '**.md'
 
+env:
+  RUST_BACKTRACE: 1
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2.0.0
-    - name: rust-toolchain
-      uses: actions-rs/toolchain@v1.0.3
-      with:
-        toolchain: nightly
-        target: x86_64-unknown-linux-gnu
-        profile: minimal
-    - name: Master Toolchain Setup
-      run: bash setup-toolchain.sh
-    - name: Build
-      run: cargo build --features integration
-    - name: Upload traget/
-      uses: actions/upload-artifact@v1.0.0
-      with:
-        name: target
-        path: target
-
-  test:
+  integration:
     strategy:
       fail-fast: false
       matrix:
@@ -55,18 +36,37 @@ jobs:
         - 'rust-lang-nursery/failure'
         - 'rust-lang/log'
         - 'chronotope/chrono'
-
-    needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2.0.0
-      - name: Download target/
-        uses: actions/download-artifact@v1.0.0
-        with:
-          name: target
-      - name: Test ${{ matrix.integration }}
-        run: cargo test --test integration --features integration
-        env:
-          INTEGRATION: ${{ matrix.integration }}
+    - name: rust-toolchain
+      uses: actions-rs/toolchain@v1.0.3
+      with:
+        toolchain: nightly
+        target: x86_64-unknown-linux-gnu
+        profile: minimal
+    - name: Checkout
+      uses: actions/checkout@v2.0.0
+    - name: Cache cargo registry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo index
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo build
+      uses: actions/cache@v1
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+    - name: Master Toolchain Setup
+      run: bash setup-toolchain.sh
+    - name: Build
+      run: cargo build --features integration
+    - name: Test ${{ matrix.integration }}
+      run: cargo test --test integration --features integration
+      env:
+        INTEGRATION: ${{ matrix.integration }}
