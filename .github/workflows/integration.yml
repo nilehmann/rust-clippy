@@ -26,7 +26,7 @@ jobs:
           target: x86_64-unknown-linux-gnu
           profile: minimal
       - name: Master Toolchain Setup
-        run: sh setup-toolchain.sh
+        run: bash setup-toolchain.sh
 
   build:
     needs: toolchain_setup
